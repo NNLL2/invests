@@ -1,10 +1,12 @@
 ﻿#-*- coding:utf-8 -*-
+import argparse
 from datetime import datetime
 from datetime import timedelta
 from decimal import Decimal
+from copy import deepcopy
 from bottle import *
 from invests import *
-from copy import deepcopy
+
 
 import sqlite3
 DB_FILE = "mim.db"
@@ -107,7 +109,8 @@ def update_invest(id):
 @app.route('/invests/<id>', method="DELETE")
 @logined()
 def delete_invest(id):
-    inv = db_call(db_delete_invest, int(id))
+    db_call(db_delete_invest, int(id))
+    db_call(db_delete_valuelog, int(id))
     db_call(update_total_valuelog)
     return {}
     
@@ -146,8 +149,14 @@ def login():
 def logout():
     response.delete_cookie('session-id')
 
-if __name__ == "__main__":
+def print_ip():
     import socket
     local_ip = socket.gethostbyname(socket.gethostname())
-    print local_ip
-    run(app, host="0.0.0.0", port=80)
+    print "Server IP: ", local_ip
+    
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--port', type=int, default=80)
+    args = parser.parse_args()
+    print_ip()
+    run(app, host="0.0.0.0", port=args.port)
