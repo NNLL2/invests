@@ -117,7 +117,7 @@ def update_invest(id):
     
     # Current value changed, update valuelog
     if inv["category"] == 1: 
-        if (old_inv is None) or (old_inv["current_value"] != inv["current_value"]):
+        if old_inv["current_value"] != inv["current_value"]:
             db_call(update_invest_valuelog, int(id), inv["current_value"])
             
     return {}
