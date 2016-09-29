@@ -84,6 +84,10 @@ def create_invest():
     inv["update_day"] = datetime.now().strftime(DATETIME_FORMAT)
     db_call(db_insert_invest, inv)
     db_call(update_total_valuelog)
+    
+    if inv["category"] == 1: 
+         db_call(update_invest_valuelog, inv["id"], inv["current_value"])
+         
     return {}
     
 def update_total_valuelog(cursor):
@@ -95,6 +99,11 @@ def update_total_valuelog(cursor):
     if (not valuelogs) or (valuelogs and valuelogs[0]["value"] != initial_sum): 
         db_insert_valuelog(cursor, 0, today, initial_sum)       
 
+def update_invest_valuelog(cursor, invest_id, new_value):
+    today = datetime.now().strftime(DATE_FORMAT)
+    db_delete_valuelog(cursor, invest_id, today)
+    db_insert_valuelog(cursor, invest_id, today, new_value)
+            
 @app.route('/invests/<id>', method="PUT")
 @logined()
 def update_invest(id):
@@ -102,8 +111,15 @@ def update_invest(id):
     print request.json
     inv = request.json
     inv["id"] = int(id)
+    old_inv = db_call(db_load_invest, int(id))
     db_call(db_update_invest, inv)
     db_call(update_total_valuelog)
+    
+    # Current value changed, update valuelog
+    if inv["category"] == 1: 
+        if (old_inv is None) or (old_inv["current_value"] != inv["current_value"]):
+            db_call(update_invest_valuelog, int(id), inv["current_value"])
+            
     return {}
     
 @app.route('/invests/<id>', method="DELETE")

@@ -259,7 +259,7 @@ app.config(['$routeProvider',
         templateUrl: '/static/show.html',
         controller: 'showCtrl'
       }).
-      when('/valuelogs/0', {
+      when('/valuelogs/:invest_id', {
         templateUrl: '/static/valuelogs.html',
         controller: 'valuelogsCtrl'
       }).
@@ -410,7 +410,7 @@ app.controller('updateCtrl', ['$scope', '$http', '$routeParams', '$location',
     
 }]);
 
-function draw(valuelogs) {
+function draw(valuelogs, title) {
   var ctx = document.getElementById("myChart");
   console.log(valuelogs.map(function(v){return v.month;}));
   var myChart = new Chart(ctx, {
@@ -419,7 +419,7 @@ function draw(valuelogs) {
       data: {
           labels: valuelogs.map(function(v){return v.month;}),
           datasets: [{
-              label: 'Total Value',
+              label: title,
               data: valuelogs.map(function(v){return v.value/1000000;}),
               backgroundColor: "rgba(75,192,192,0.4)",
               borderColor: "rgba(75,192,192,1)",
@@ -442,10 +442,10 @@ function draw(valuelogs) {
 app.controller("valuelogsCtrl",['$scope', '$http', '$routeParams', '$location', 
     function($scope, $http, $routeParams, $location) {
 
-  $http.get('/valuelogs/0')
+  $http.get('/valuelogs/' + $routeParams.invest_id)
     .success(function(response) {
       console.log(response.valuelogs);
-      draw(prepare_valuelogs_for_chart(response.valuelogs));
+      draw(prepare_valuelogs_for_chart(response.valuelogs), "Title TODO");
       //prepare_valuelogs_for_chart(response.valuelogs);
     });
     
