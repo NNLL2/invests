@@ -1,0 +1,127 @@
+<div class="row">
+  <p class="text-center my-page-header">{[{header}]}</p>
+  <div class="col-sm-10 col-sm-offset-1">
+    <form method="post" class="form-horizontal" role="form">
+      <div class="form-group">
+        <label class="control-label col-sm-2" for="name">名称:</label>
+        <div class="col-sm-6">
+          <input type="text" class="form-control" name="name" ng-model="invest.name" autofocus required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="control-label col-sm-2" for="owner">管理:</label>
+        <div class="col-sm-5">   
+
+          <div class="radio-inline">        
+            <input type="radio" name="owner" ng-model="invest.owner" value="JIN">JIN</input>
+          </div>
+          <div class="radio-inline">
+            <input type="radio" name="owner" ng-model="invest.owner" value="WANG">WANG</input>
+          </div> 
+        
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="control-label col-sm-2" for="initial_value">投资金额(元):</label>
+        <div class="col-sm-4">
+          <input type="number" step="0.01" class="form-control" name="initial_value" ng-model="invest.initial_value">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="control-label col-sm-2" for="start_day">开始日期:</label>
+        <div class="col-sm-4">          
+          <input type="date" class="form-control" name="start_day" ng-model="invest.start_day" ng-change="updateEndDate(invest)">
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label class="control-label col-sm-2" for="category">类型:</label>
+        <div class="col-sm-6">   
+
+          <div class="radio-inline">
+            <input type="radio" name="category" ng-model="invest.category" value="0">固定收益</input>
+          </div>
+          <div class="radio-inline">
+            <input type="radio" name="category" ng-model="invest.category" value="1">可变收益</input>
+          </div>  
+          <div class="radio-inline">
+            <input type="radio" name="category" ng-model="invest.category" value="2">现金账户</input>
+          </div>  
+        </div>
+      </div> 
+
+    <div class="form-group">
+      <label class="control-label col-sm-2" for="yearly_rate">预期年利率:</label>
+      <div class="col-sm-3">
+        <div class="input-group">
+            <input type="number" class="form-control" name="yearly_rate" step="0.01" 
+                ng-model="invest.yearly_rate" ng-disabled="invest.category != 0" />
+            <div class="input-group-addon">%</div>
+        </div>
+      </div>
+    </div>   
+    <div class="form-group">
+      <label class="control-label col-sm-2 col-md-2" for="year_days">年化天数:</label>
+      <div class="col-sm-4">   
+
+        <div class="radio-inline">
+          <input type="radio" name="year_days" value="365" ng-model="invest.year_days" ng-disabled="invest.category != 0">365天</input>
+        </div>
+        <div class="radio-inline">
+          <input type="radio" name="year_days" value="360" ng-model="invest.year_days" ng-disabled="invest.category != 0">360天</input>
+        </div>       
+      </div>
+    </div>     
+
+    <div class="form-group">
+      <label class="control-label col-sm-2" for="end_day">天数:</label>
+      <div class="col-sm-3">
+        <input type="number" class="form-control" name="days" 
+                ng-model="invest.days" ng-change="updateEndDate(invest)" ng-disabled="invest.category != 0" >
+      </div>
+    </div>
+    
+    <div class="form-group">
+      <label class="control-label col-sm-2" for="end_day">终止日期:</label>
+      <div class="col-sm-4">
+        <input type="date" class="form-control" name="end_day" 
+            ng-model="invest.end_day" ng-change="updateDays(invest)" ng-disabled="(invest.category != 0) && (invest.closed == 0)" />
+      </div>
+    </div>
+         
+      <div class="form-group" ng-hide="creating">
+        <label class="control-label col-sm-2" for="closed">状态:</label>
+        <div class="col-sm-6">   
+
+          <div class="radio-inline">
+            <input type="radio" name="closed" ng-model="invest.closed" value="0">进行中</input>
+          </div>
+          <div class="radio-inline">
+            <input type="radio" name="closed" ng-model="invest.closed" value="1">已关闭</input>
+          </div>  
+        </div>
+      </div>     
+      
+      <div class="form-group" ng-hide="creating">
+        <label class="control-label col-sm-2" for="actual_gain">实际收益(元):</label>
+        <div class="col-sm-4">
+          <input type="number" step="0.01" class="form-control" name="actual_gain" ng-model="invest.actual_gain" ng-disabled="invest.closed == 0">
+        </div>
+      </div>
+      
+      <div class="form-group" ng-hide="creating">
+        <label class="control-label col-sm-2" for="current_value">现值(元):</label>
+        <div class="col-sm-4">
+          <input type="number" step="0.01" class="form-control" name="current_value" ng-model="invest.current_value" ng-disabled="(invest.category == 0) || (invest.closed == 1)">
+        </div>
+      </div>
+      
+      <div class="form-group">        
+        <div class="col-sm-offset-2 col-sm-2 col-xs-8 col-xs-offset-2">
+          <button type="submit" ng-click="submit()" class="btn btn-danger btn-block btn-lg">提交</button>
+        </div>
+      </div>
+      
+    </form>
+  </div>
+</div>

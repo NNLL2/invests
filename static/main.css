@@ -1,0 +1,50 @@
+#header {
+  height: 25px;
+}
+
+#toolbox {
+  float: right;
+}
+
+.tool {
+  width: 120px;
+  background-color:  #006d4f;
+
+  float: right;
+}
+
+
+.tool a {
+  text-decoration: none;
+  color: white;
+
+}
+
+
+#toolbox a:hover {
+    text-decoration: underline;
+}
+
+#toolbox a:active {
+    text-decoration: underline;
+}
+
+.post_table {
+margin:auto;
+}
+
+.post_table .field_name {
+  float: right;
+}
+
+.submit-btn {
+
+float: right;
+}
+
+canvas {
+  background-color: blue; 
+  width: 100%;
+  height: auto;
+}
+
