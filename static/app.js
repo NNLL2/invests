@@ -110,10 +110,6 @@ function clean_invest(invest) {
             inv.current_value = invest.current_value * 100;
         }
     }
-    
-    if (invest.category == 2) {
-      inv.initial_value = inv.current_value;
-    }
 
     return inv;
 };
