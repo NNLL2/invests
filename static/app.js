@@ -441,12 +441,18 @@ function draw(valuelogs, title) {
   
 app.controller("valuelogsCtrl",['$scope', '$http', '$routeParams', '$location', 
     function($scope, $http, $routeParams, $location) {
-
-  $http.get('/valuelogs/' + $routeParams.invest_id)
-    .success(function(response) {
-      console.log(response.valuelogs);
-      draw(prepare_valuelogs_for_chart(response.valuelogs), "Title TODO");
-      //prepare_valuelogs_for_chart(response.valuelogs);
-    });
-    
+      $http.get('/valuelogs/' + $routeParams.invest_id)
+        .success(function(response) {
+          if ($routeParams.invest_id == 0) {
+            draw(prepare_valuelogs_for_chart(response.valuelogs),"Total value");
+          }
+          else {
+            $http.get('/invests/' + $routeParams.invest_id)
+              .success(function(response_inv) {      
+                console.log(response.valuelogs);
+                draw(prepare_valuelogs_for_chart(response.valuelogs), response_inv.invest.name);
+              });
+          }
+        })
+            
 }]);
