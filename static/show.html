@@ -75,6 +75,13 @@
     <td class="text-right"><strong>状态:</strong></td>
     <td>{[{invest.closed? "已关闭": "进行中"}]}</td>
     </tr>    
+    
+    <tr ng-if="invest.category == 1 && invest.closed == 0">
+    <td class="text-right"><strong>当前收益率:</strong></td>
+    <td>{[{invest.current_gain_rate|mydec}]}%</td>
+    </tr>
+    
+    
     <tr ng-if="invest.closed == 1">
     <td class="text-right"><strong>实际收益:</strong></td>
     <td>{[{invest.actual_gain|mydec}]}</td>

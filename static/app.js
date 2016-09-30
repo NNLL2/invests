@@ -71,11 +71,19 @@ function prepare_invest(invest, for_show) {
         
     if (invest.closed == 1) {
       invest.actual_gain /= 100;
-      var year_days = invest.year_days?invest.year_days: 365;
       invest.actual_gain_rate = invest.actual_gain / invest.initial_value * invest.year_days/invest.days * 100;       
     } else {
       invest.actual_gain = invest.current_value - invest.initial_value;
       invest.actual_gain = Math.round(invest.actual_gain * 100)/100;
+      
+      // Compute current gain rate
+      
+      var days = moment(invest.update_day, "YYYY-MM-DD HH:mm:ss").diff(moment(invest.start_day), "days"); 
+      if (days > 0) {
+        invest.current_gain_rate = invest.actual_gain / invest.initial_value * 365/days * 100;
+      } else {
+        invest.current_gain_rate = 0;
+      }
     }
 
   }
@@ -119,18 +127,25 @@ function total_value($scope, invests) {
       return partSum + b.initial_value;
     }
     var ongoing = invests.filter(function(inv) { return inv.closed == 0;});
-    var ongoing_jin = invests.filter(function(inv) { return inv.closed == 0 && inv.owner == 'JIN';});
-    var ongoing_wang = invests.filter(function(inv) { return inv.closed == 0 && inv.owner == 'WANG';});
-    var closed_invest = invests.filter(function(inv) { return inv.closed == 1;});
+    var ongoing_jin = 
+      invests.filter(function(inv) { return inv.closed == 0 && inv.owner == 'JIN';});
+    var ongoing_wang = 
+      invests.filter(function(inv) { return inv.closed == 0 && inv.owner == 'WANG';});
+    var closed_invest = 
+      invests.filter(function(inv) { return inv.closed == 1;});
+      
     $scope.total_invest = ongoing.reduce(sum_init, 0)/100;
     $scope.total_invest_count = ongoing.length;
     $scope.total_invest_jin = ongoing_jin.reduce(sum_init, 0)/100;
     $scope.total_invest_jin_count = ongoing_jin.length;
     $scope.total_invest_wang = ongoing_wang.reduce(sum_init, 0)/100;
     $scope.total_invest_wang_count = ongoing_wang.length;
-    var closed_this_year = closed_invest.filter(function(inv) { return inv.end_day.startsWith("2016"); } );
-    $scope.total_gain = (closed_this_year.reduce(function(partSum, b) { return partSum + b.actual_gain}, 0))/100;
-    $scope.total_current_value = (ongoing.reduce(function(partSum, b) { return partSum + b.current_value}, 0))/100;
+    var closed_this_year = 
+      closed_invest.filter(function(inv) { return inv.end_day.startsWith("2016"); } );
+    $scope.total_gain = 
+      (closed_this_year.reduce(function(partSum, b) { return partSum + b.actual_gain}, 0))/100;
+    $scope.total_current_value = 
+      (ongoing.reduce(function(partSum, b) { return partSum + b.current_value}, 0))/100;
 }
 
 function prepare_valuelogs_for_chart(valuelogs) {
@@ -160,31 +175,25 @@ function prepare_valuelogs_for_chart(valuelogs) {
 
    {"date": "2016-07-14", "value": 271630300}, {"date": "2016-07-19", "value": 271482400}];
    {"date": "2016-07-28", "value": 272900083}, {"date": "2016-07-30", "value": 273900083}]; */
-   
-  console.log(valuelogs);
 
   valuelogs = valuelogs.sort(function(v1, v2) { 
     return moment(v1.date).isBefore(v2.date)? -1: (moment(v1.date).isAfter(v2.date)? 1: 0);
   });
   
-   console.log(valuelogs);
 
   var lastMonth = "0000-00";
   var lastValue = 0;
   var result = [];
   valuelogs.forEach(function(vl) {
     var currentMonth = vl.date.substring(0, 7);
-    console.log("currentMonth " + currentMonth);
     if (currentMonth == lastMonth) {
       result.pop();
-      console.log("poping " + currentMonth);
     } else {
       
       if (lastMonth != "0000-00") {
         var nextOfLastMonth = moment(lastMonth, "YYYY-MM").add(1, 'months').format("YYYY-MM");
         while (nextOfLastMonth != currentMonth) {
           result.push({month: nextOfLastMonth, value: lastValue});
-          console.log("inserting " + nextOfLastMonth);
           lastMonth = nextOfLastMonth;
           nextOfLastMonth = moment(lastMonth, "YYYY-MM").add(1, 'months').format("YYYY-MM");
         }
@@ -192,14 +201,11 @@ function prepare_valuelogs_for_chart(valuelogs) {
       
     }
     result.push({month: currentMonth, value: vl.value});
-    console.log("pushing " + currentMonth);
-    console.log("value " + vl.value);
     lastMonth = currentMonth;
     lastValue = vl.value;
 
   });
 
-  console.log(result);  
   return result;  
   
 }
@@ -376,6 +382,7 @@ app.controller('showCtrl', ['$scope', '$http', '$routeParams', '$location',
   $http.get('/invests/' + $routeParams.invest_id)
     .success(function(response) {
       setup_invest($scope, response.invest, true);
+
     });
     
 }]);
@@ -412,7 +419,7 @@ app.controller('updateCtrl', ['$scope', '$http', '$routeParams', '$location',
 
 function draw(valuelogs, title) {
   var ctx = document.getElementById("myChart");
-  console.log(valuelogs.map(function(v){return v.month;}));
+
   var myChart = new Chart(ctx, {
       type: 'line',
       
@@ -449,7 +456,6 @@ app.controller("valuelogsCtrl",['$scope', '$http', '$routeParams', '$location',
           else {
             $http.get('/invests/' + $routeParams.invest_id)
               .success(function(response_inv) {      
-                console.log(response.valuelogs);
                 draw(prepare_valuelogs_for_chart(response.valuelogs), response_inv.invest.name);
               });
           }

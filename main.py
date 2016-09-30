@@ -112,14 +112,15 @@ def update_invest(id):
     inv = request.json
     inv["id"] = int(id)
     old_inv = db_call(db_load_invest, int(id))
-    db_call(db_update_invest, inv)
-    db_call(update_total_valuelog)
-    
     # Current value changed, update valuelog
     if inv["category"] == 1: 
         if old_inv["current_value"] != inv["current_value"]:
             db_call(update_invest_valuelog, int(id), inv["current_value"])
-            
+            inv["update_day"] = datetime.now().strftime(DATETIME_FORMAT)
+
+    db_call(db_update_invest, inv)
+    db_call(update_total_valuelog)
+         
     return {}
     
 @app.route('/invests/<id>', method="DELETE")
