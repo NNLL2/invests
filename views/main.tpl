@@ -49,6 +49,10 @@
       font-size: 20px;
       padding: 10px;
     }
+    .my-v3 {
+      font-size: 15px;
+      padding: 5px;
+    }
     li.right { float:right; padding: 0 10pt 0 0; }
     
     canvas {
