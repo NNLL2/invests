@@ -1,0 +1,100 @@
+
+
+<p class="text-center my-page-header">详细信息</p>
+<div class="row">
+  <div class="col-sm-4 col-sm-offset-4">
+    <table class="table table-bordered">
+    <tr>
+      <td class="text-right"><strong>名称:</strong></td>
+      <td>{[{invest.name}]}</td>
+    </tr>
+
+    <tr>
+      <td class="text-right"><strong>管理:</strong></td>
+      <td>{[{invest.owner}]}</td>
+    </tr>
+    
+    <tr>
+      <td class="text-right"><strong>投资额:</strong></td>
+      <td>{[{invest.initial_value|mydec}]}</td>
+    </tr>    
+    
+    <tr ng-if="invest.closed == 0">
+      <td class="text-right"><strong>现值:</strong></td>
+      <td>{[{invest.current_value|mydec}]}</td>
+    </tr>    
+    <tr>
+    
+    <td class="text-right"><strong>投资类型:</strong></td>
+      <td>{[{invest.category == 0? "固定收益": "可变收益"}]}</td>
+    </tr>
+    
+    <tr>
+      <td class="text-right"><strong>开始日期:</strong></td>
+      <td>{[{invest.start_day|mydate}]}</td>
+    </tr>
+    
+    
+    <tr ng-if="invest.category == 0">
+    <td class="text-right"><strong>预期收益率:</strong></td>
+    <td>{[{invest.yearly_rate|mydec}]}%</td>
+    </tr>
+    
+    <tr ng-if="invest.category == 0">
+    <td class="text-right"><strong>预期收益:</strong></td>
+    <td>{[{invest.expected_gain|mydec}]}</td>
+    </tr>
+    
+    <tr ng-if="invest.category == 0">
+    <td class="text-right"><strong>总天数:</strong></td>
+    <td>{[{invest.days}]}</td>
+    </tr>
+
+
+    <tr ng-if="invest.category == 0 && invest.closed == 0 && !invest.over_due">
+    <td class="text-right"><strong>剩余天数:</strong></td>
+    <td>{[{invest.remain_days}]}</td>
+    </tr>    
+    
+    <tr ng-if="invest.category == 0 && invest.closed == 0 && invest.over_due">
+    <td class="text-right text-danger"><strong>过期天数:</strong></td>
+    <td class="text-danger">{[{invest.over_days}]}</td>
+    </tr>
+
+    <tr ng-if="(invest.category == 0) || (invest.closed == 1)">
+      <td class="text-right"><strong>终止日期:</strong></td>
+      <td>{[{invest.end_day|mydate}]}</td>
+    </tr>
+    
+    <tr ng-if="invest.category == 0">
+    <td class="text-right"><strong>年化天数:</strong></td>
+    <td>{[{invest.year_days}]}</td>
+    </tr>
+    
+    <tr>
+    <td class="text-right"><strong>状态:</strong></td>
+    <td>{[{invest.closed? "已关闭": "进行中"}]}</td>
+    </tr> 
+
+    <tr ng-if="invest.category == 1 && invest.closed == 0">
+    <td class="text-right"><strong>现值更新日期:</strong></td>
+    <td>{[{invest.update_day}]}</td>
+    </tr>    
+    
+    <tr ng-if="invest.category == 1 && invest.closed == 0">
+    <td class="text-right"><strong>当前收益率:</strong></td>
+    <td>{[{invest.current_gain_rate|mydec}]}%</td>
+    </tr>
+    
+    
+    <tr ng-if="invest.closed == 1">
+    <td class="text-right"><strong>实际收益:</strong></td>
+    <td>{[{invest.actual_gain|mydec}]}</td>
+    </tr>
+
+
+
+    </table>
+  </div>
+</div>
+          
