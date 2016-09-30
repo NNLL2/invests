@@ -77,7 +77,6 @@ def db_delete_invest(cursor, id):
     
 def db_insert_invest(cursor, invest):
     r = _repr_invest(invest)
-    print r
     fields = ",".join(map(itemgetter(0), r))
     values = ",".join(map(itemgetter(1), r))
     sql = "insert into invest (" + fields + ") values (" + values + ")"
