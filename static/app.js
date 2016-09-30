@@ -33,14 +33,14 @@ function prepare_invest(invest, for_show) {
     
   } else { // for existing      
     invest.is_new = moment().diff(moment(invest.create_day, "YYYY-MM-DD HH:mm:ss"), "days") < 1;
-    invest.start_day = new Date(invest.start_day);
+    //invest.start_day = new Date(invest.start_day);
     invest.initial_value /= 100;
     
-    if (invest.category == 0) {
+    if (invest.category == 0) { //existing fixed
       invest.end_day = new Date(invest.end_day);
       updateDays(invest);
       invest.yearly_rate /= 100;
-      var to_todays = moment().diff(moment(invest.start_day), "days");
+      var to_todays = moment().diff(moment(invest.start_day, "YYYY-MM-DD"), "days");
       invest.current_value = Math.max(0, Math.min(invest.days, to_todays))
           * invest.initial_value 
           * (invest.yearly_rate/100) 
@@ -48,8 +48,8 @@ function prepare_invest(invest, for_show) {
           + invest.initial_value;
       invest.current_value = Math.round(invest.current_value * 100)/100;
           
-      invest.expected_gain = (invest.initial_value * (invest.yearly_rate / 100) * invest.days / invest.year_days);
-      
+      invest.expected_gain = invest.initial_value * (invest.yearly_rate / 100) 
+                             * invest.days / invest.year_days;
       
       invest.remain_days = moment(invest.end_day).diff(new Date(), "days");
       invest.over_due =  (invest.closed == 0) && (invest.remain_days < 0);
@@ -57,35 +57,39 @@ function prepare_invest(invest, for_show) {
         invest.over_days = -invest.remain_days;
       }
       
-    } else {
+    } else { //existing variable
       invest.current_value /= 100;
       angular.extend(invest, c0_init);
       if (invest.closed == 0) {
         invest.days = 180;
         updateEndDate(invest);
+        
+        // Compute current gain rate
+        var days = moment(invest.update_day, "YYYY-MM-DD").diff(moment(invest.start_day, "YYYY-MM-DD"), "days"); 
+        console.log(invest);
+        console.log("days=" + days);
+        if (days > 0) {
+          invest.current_gain_rate = invest.actual_gain / invest.initial_value * 365/days;
+        } else {
+          invest.current_gain_rate = 0;
+        }
+        
       } else {
         invest.end_day = new Date(invest.end_day);
         updateDays(invest);
       }
     }
-        
+    
+    invest.start_day = new Date(invest.start_day);
+    
     if (invest.closed == 1) {
       invest.actual_gain /= 100;
-      invest.actual_gain_rate = invest.actual_gain / invest.initial_value * invest.year_days/invest.days * 100;       
+      invest.actual_gain_rate = invest.actual_gain / invest.initial_value 
+                                * invest.year_days/invest.days * 100;       
     } else {
       invest.actual_gain = invest.current_value - invest.initial_value;
       invest.actual_gain = Math.round(invest.actual_gain * 100)/100;
-      
-      // Compute current gain rate
-      
-      var days = moment(invest.update_day, "YYYY-MM-DD HH:mm:ss").diff(moment(invest.start_day), "days"); 
-      if (days > 0) {
-        invest.current_gain_rate = invest.actual_gain / invest.initial_value * 365/days * 100;
-      } else {
-        invest.current_gain_rate = 0;
-      }
     }
-
   }
   return invest;
 }
@@ -97,29 +101,29 @@ function setup_invest($scope, invest, for_show) {
 };
 
 function clean_invest(invest) {
-    var inv = {}
-    inv.name = invest.name;
-    inv.owner = invest.owner;
-    inv.initial_value = invest.initial_value * 100;
-    inv.actual_gain = invest.actual_gain * 100;
-    inv.category = parseInt(invest.category);
-    inv.closed = parseInt(invest.closed);
-    inv.start_day = moment(invest.start_day).format("YYYY-MM-DD");
-    if ((invest.category == 0) || (invest.closed == 1)) {
-        inv.end_day = moment(invest.end_day).format("YYYY-MM-DD");    
-    }
-    if (invest.category == 0) {
-        inv.yearly_rate = invest.yearly_rate * 100;
-        inv.year_days = invest.year_days;
+  var inv = {}
+  inv.name = invest.name;
+  inv.owner = invest.owner;
+  inv.initial_value = invest.initial_value * 100;
+  inv.actual_gain = invest.actual_gain * 100;
+  inv.category = parseInt(invest.category);
+  inv.closed = parseInt(invest.closed);
+  inv.start_day = moment(invest.start_day).format("YYYY-MM-DD");
+  if ((invest.category == 0) || (invest.closed == 1)) {
+    inv.end_day = moment(invest.end_day).format("YYYY-MM-DD");    
+  }
+  if (invest.category == 0) {
+    inv.yearly_rate = invest.yearly_rate * 100;
+    inv.year_days = invest.year_days;
+  } else {
+    if (!invest.current_value) {
+      inv.current_value = invest.initial_value * 100;
     } else {
-        if (!invest.current_value) {
-            inv.current_value = invest.initial_value * 100;
-        } else {
-            inv.current_value = invest.current_value * 100;
-        }
+      inv.current_value = invest.current_value * 100;
     }
+  }
 
-    return inv;
+  return inv;
 };
 
 function total_value($scope, invests) {
@@ -207,73 +211,14 @@ function prepare_valuelogs_for_chart(valuelogs) {
   });
 
   return result;  
-  
 }
 
-/* Main Start */
-var app = angular.module('myApp', ['ui.bootstrap', 'ngRoute']);
-
-app.filter(
-    'mydec', function() {
-        return function(dec) {
-            return dec?dec.toFixed(2):dec;
-        }
-    }
-);
-
-app.filter(
-    'mydate', function() {
-        return function(value) {
-            return moment(value).format("YYYY-MM-DD");
-        }
-    }
-);
-
-app.config(function($interpolateProvider) {
-  $interpolateProvider.startSymbol('{[{');
-  $interpolateProvider.endSymbol('}]}');
-});
-
-app.config(['$routeProvider',
-  function($routeProvider) {
-    $routeProvider.
-      when('/invests', {
-        templateUrl: '/static/list.html',
-        controller: 'listCtrl'
-      }).
-      when('/invests-closed', {
-        templateUrl: '/static/list.html',
-        controller: 'listClosedCtrl'
-      }).
-      when('/invests/create', {
-        templateUrl: '/static/edit.html',
-        controller: 'createCtrl'
-      }).
-      when('/invests/:invest_id/edit', {
-        templateUrl: '/static/edit.html',
-        controller: 'detailCtrl'
-      }).
-      when('/invests/:invest_id/close', {
-        templateUrl: '/static/close.html',
-        controller: 'closeCtrl'
-      }).
-      when('/invests/:invest_id/update', {
-        templateUrl: '/static/update-value.html',
-        controller: 'updateCtrl'
-      }).
-      when('/invests/:invest_id/show', {
-        templateUrl: '/static/show.html',
-        controller: 'showCtrl'
-      }).
-      when('/valuelogs/:invest_id', {
-        templateUrl: '/static/valuelogs.html',
-        controller: 'valuelogsCtrl'
-      }).
-      otherwise({
-        redirectTo: '/invests'
-      });
-  }]
-); 
+function submit_update($scope, $http, $routeParams, $location) {
+  $http.put('/invests/' + $routeParams.invest_id, JSON.stringify(clean_invest($scope.invest)))
+    .success(function() {
+      $location.path("/invests");
+    });
+}
 
 function delete_invest($http, $route, invest_id, invest_name) { 
     if (confirm("确定要删除" + invest_name + "?")) {
@@ -326,103 +271,11 @@ function listCtrlFn($scope, $http, $route, $location, closed) {
     });
 }
 
-app.controller("NavBarCtrl", 
-  function ($scope, $location) {
-    $scope.isCollapsed = true;
-  });
-
-app.controller('listCtrl', function($scope, $http, $route, $location) {
-    listCtrlFn($scope, $http, $route, $location, 0);
-});
-
-
-app.controller('listClosedCtrl', function($scope, $http, $route, $location) {
-    listCtrlFn($scope, $http, $route, $location, 1);
-});
-
-app.controller('createCtrl', ['$scope', '$http', '$location', 
-    function($scope, $http,  $location) {
-  $scope.header = "新建项目";
-  $scope.submit = function() {
-    $http.post('/invests', JSON.stringify(clean_invest($scope.invest)))
-      .success(function() {
-        $location.path("/invests");
-      });
-  };
-  $scope.creating = true;
-  setup_invest($scope);
-}]);
-
-function submit_update($scope, $http, $routeParams, $location) {
-  $http.put('/invests/' + $routeParams.invest_id, JSON.stringify(clean_invest($scope.invest)))
-    .success(function() {
-      $location.path("/invests");
-    });
-}
-
-app.controller('detailCtrl', ['$scope', '$http', '$routeParams', '$location', 
-    function($scope, $http, $routeParams, $location) {
-  $scope.header = "编辑项目"; 
-
-  $scope.submit = function() {
-    submit_update($scope, $http, $routeParams, $location);
-  };
-  
-  $http.get('/invests/' + $routeParams.invest_id)
-    .success(function(response) {
-      $scope.creating = false;
-      setup_invest($scope, response.invest);
-    });
-    
-}]);
-
-app.controller('showCtrl', ['$scope', '$http', '$routeParams', '$location', 
-    function($scope, $http, $routeParams, $location) {
-
-  $http.get('/invests/' + $routeParams.invest_id)
-    .success(function(response) {
-      setup_invest($scope, response.invest, true);
-
-    });
-    
-}]);
-
-app.controller('closeCtrl', ['$scope', '$http', '$routeParams', '$location', 
-    function($scope, $http, $routeParams, $location) {
-  $scope.submit = function() {
-    submit_update($scope, $http, $routeParams, $location);
-  };
-  
-  $http.get('/invests/' + $routeParams.invest_id)
-    .success(function(response) {
-      setup_invest($scope, response.invest);
-      if ($scope.invest.category != 0) {
-        $scope.invest.end_day = new Date();
-      }
-      $scope.invest.closed = 1;
-    });
-    
-}]);
-
-app.controller('updateCtrl', ['$scope', '$http', '$routeParams', '$location', 
-    function($scope, $http, $routeParams, $location) {
-  $scope.submit = function() {
-    submit_update($scope, $http, $routeParams, $location);
-  };
-  
-  $http.get('/invests/' + $routeParams.invest_id)
-    .success(function(response) {
-      setup_invest($scope, response.invest);
-    });
-    
-}]);
 
 function draw(valuelogs, title) {
   var ctx = document.getElementById("myChart");
-
   var myChart = new Chart(ctx, {
       type: 'line',
-      
       data: {
           labels: valuelogs.map(function(v){return v.month;}),
           datasets: [{
@@ -443,22 +296,167 @@ function draw(valuelogs, title) {
           }
       }
   });
-  
 }
+
+/* Main Start */
+var app = angular.module('myApp', ['ui.bootstrap', 'ngRoute']);
+
+app.filter(
+  'mydec', function() {
+      return function(dec) {
+        return dec?dec.toFixed(2):dec;
+      }
+  }
+);
+
+app.filter(
+  'mydate', function() {
+      return function(value) {
+        return moment(value).format("YYYY-MM-DD");
+      }
+  }
+);
+
+app.config(function($interpolateProvider) {
+  $interpolateProvider.startSymbol('{[{');
+  $interpolateProvider.endSymbol('}]}');
+});
+
+app.config(['$routeProvider',
+  function($routeProvider) {
+    $routeProvider.
+      when('/invests', {
+        templateUrl: '/static/list.html',
+        controller: 'listCtrl'
+      }).
+      when('/invests-closed', {
+        templateUrl: '/static/list.html',
+        controller: 'listClosedCtrl'
+      }).
+      when('/invests/create', {
+        templateUrl: '/static/edit.html',
+        controller: 'createCtrl'
+      }).
+      when('/invests/:invest_id/edit', {
+        templateUrl: '/static/edit.html',
+        controller: 'detailCtrl'
+      }).
+      when('/invests/:invest_id/close', {
+        templateUrl: '/static/close.html',
+        controller: 'closeCtrl'
+      }).
+      when('/invests/:invest_id/update', {
+        templateUrl: '/static/update-value.html',
+        controller: 'updateCtrl'
+      }).
+      when('/invests/:invest_id/show', {
+        templateUrl: '/static/show.html',
+        controller: 'showCtrl'
+      }).
+      when('/valuelogs/:invest_id', {
+        templateUrl: '/static/valuelogs.html',
+        controller: 'valuelogsCtrl'
+      }).
+      otherwise({
+        redirectTo: '/invests'
+      });
+  }]
+); 
+
+app.controller("NavBarCtrl", 
+  function ($scope, $location) {
+    $scope.isCollapsed = true;
+  });
+
+app.controller('listCtrl', function($scope, $http, $route, $location) {
+    listCtrlFn($scope, $http, $route, $location, 0);
+});
+
+
+app.controller('listClosedCtrl', function($scope, $http, $route, $location) {
+    listCtrlFn($scope, $http, $route, $location, 1);
+});
+
+app.controller('createCtrl', ['$scope', '$http', '$location', 
+  function($scope, $http,  $location) {
+    $scope.header = "新建项目";
+    $scope.submit = function() {
+      $http.post('/invests', JSON.stringify(clean_invest($scope.invest)))
+        .success(function() {
+          $location.path("/invests");
+        });
+    };
+    $scope.creating = true;
+    setup_invest($scope);
+  }]);
+
+app.controller('detailCtrl', ['$scope', '$http', '$routeParams', '$location', 
+  function($scope, $http, $routeParams, $location) {
+    $scope.header = "编辑项目"; 
+
+    $scope.submit = function() {
+      submit_update($scope, $http, $routeParams, $location);
+    };
+
+    $http.get('/invests/' + $routeParams.invest_id)
+      .success(function(response) {
+        $scope.creating = false;
+        setup_invest($scope, response.invest);
+      });
   
+  }]);
+
+app.controller('showCtrl', ['$scope', '$http', '$routeParams', '$location', 
+  function($scope, $http, $routeParams, $location) {
+    $http.get('/invests/' + $routeParams.invest_id)
+      .success(function(response) {
+        setup_invest($scope, response.invest, true);
+      });
+  
+  }]);
+
+app.controller('closeCtrl', ['$scope', '$http', '$routeParams', '$location', 
+  function($scope, $http, $routeParams, $location) {
+    $scope.submit = function() {
+      submit_update($scope, $http, $routeParams, $location);
+    };
+    
+    $http.get('/invests/' + $routeParams.invest_id)
+      .success(function(response) {
+        setup_invest($scope, response.invest);
+        if ($scope.invest.category != 0) {
+          $scope.invest.end_day = new Date();
+        }
+        $scope.invest.closed = 1;
+      });
+  
+  }]);
+
+app.controller('updateCtrl', ['$scope', '$http', '$routeParams', '$location', 
+  function($scope, $http, $routeParams, $location) {
+    $scope.submit = function() {
+      submit_update($scope, $http, $routeParams, $location);
+    };
+    
+    $http.get('/invests/' + $routeParams.invest_id)
+      .success(function(response) {
+        setup_invest($scope, response.invest);
+      });
+  }]);
+
 app.controller("valuelogsCtrl",['$scope', '$http', '$routeParams', '$location', 
-    function($scope, $http, $routeParams, $location) {
-      $http.get('/valuelogs/' + $routeParams.invest_id)
-        .success(function(response) {
-          if ($routeParams.invest_id == 0) {
-            draw(prepare_valuelogs_for_chart(response.valuelogs),"Total value");
-          }
-          else {
-            $http.get('/invests/' + $routeParams.invest_id)
-              .success(function(response_inv) {      
-                draw(prepare_valuelogs_for_chart(response.valuelogs), response_inv.invest.name);
-              });
-          }
-        })
-            
-}]);
+  function($scope, $http, $routeParams, $location) {
+    $http.get('/valuelogs/' + $routeParams.invest_id)
+      .success(function(response) {
+        if ($routeParams.invest_id == 0) {
+          draw(prepare_valuelogs_for_chart(response.valuelogs),"Total value");
+        }
+        else {
+          $http.get('/invests/' + $routeParams.invest_id)
+            .success(function(response_inv) {      
+              draw(prepare_valuelogs_for_chart(response.valuelogs), response_inv.invest.name);
+            });
+        }
+      })
+          
+  }]);

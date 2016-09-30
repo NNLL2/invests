@@ -81,7 +81,7 @@ def create_invest():
     inv = new_invest() # Get default values
     inv.update(request.json)
     inv["create_day"] = datetime.now().strftime(DATETIME_FORMAT)
-    inv["update_day"] = datetime.now().strftime(DATETIME_FORMAT)
+    inv["update_day"] = datetime.now().strftime(DATE_FORMAT)
     db_call(db_insert_invest, inv)
     db_call(update_total_valuelog)
     
@@ -116,7 +116,7 @@ def update_invest(id):
     if inv["category"] == 1: 
         if old_inv["current_value"] != inv["current_value"]:
             db_call(update_invest_valuelog, int(id), inv["current_value"])
-            inv["update_day"] = datetime.now().strftime(DATETIME_FORMAT)
+            inv["update_day"] = datetime.now().strftime(DATE_FORMAT)
 
     db_call(db_update_invest, inv)
     db_call(update_total_valuelog)

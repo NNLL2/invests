@@ -74,6 +74,11 @@
     <tr>
     <td class="text-right"><strong>状态:</strong></td>
     <td>{[{invest.closed? "已关闭": "进行中"}]}</td>
+    </tr> 
+
+    <tr ng-if="invest.category == 1 && invest.closed == 0">
+    <td class="text-right"><strong>现值更新日期:</strong></td>
+    <td>{[{invest.update_day}]}</td>
     </tr>    
     
     <tr ng-if="invest.category == 1 && invest.closed == 0">
