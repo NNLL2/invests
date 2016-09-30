@@ -136,6 +136,10 @@ def server_static(path):
 def fonts_static(path):
     return static_file(path, root='fonts')
     
+@app.route('/app/:path#.+#')
+def fonts_static(path):
+    return static_file(path, root='app')
+    
 @app.route('/login',  method='GET')
 @view('login')
 def login_form():

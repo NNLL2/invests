@@ -1,13 +1,13 @@
 <NotepadPlus>
     <Project name="mim">
-        <Folder name="static">
-            <File name="static\app.js" />
-            <File name="static\close.html" />
-            <File name="static\edit.html" />
-            <File name="static\list.html" />
-            <File name="static\show.html" />
-            <File name="static\update-value.html" />
-            <File name="static\valuelogs.html" />
+        <Folder name="app">
+            <File name="app\app.js" />
+            <File name="app\close.html" />
+            <File name="app\edit.html" />
+            <File name="app\list.html" />
+            <File name="app\show.html" />
+            <File name="app\update-value.html" />
+            <File name="app\valuelogs.html" />
         </Folder>
         <Folder name="views">
             <File name="views\login.tpl" />

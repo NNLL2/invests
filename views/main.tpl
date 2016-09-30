@@ -20,7 +20,7 @@
     
     <script src="/static/Chart.js"></script>
     
-    <script src="/static/app.js"></script>
+    <script src="/app/app.js"></script>
 
     <!-- Custom styles for this template -->
     <link href="/static/dashboard.css" rel="stylesheet">
