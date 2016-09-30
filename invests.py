@@ -46,8 +46,9 @@ FIELDS = (
     ("create_day", ""),
 )
 
-def print_sql(sql):
-    pass
+def exec_sql(cursor, sql):
+    #print(sql)
+    cursor.execute(sql)
     
 def new_invest():
     d = dict(map(itemgetter(0, 1), FIELDS))
@@ -55,7 +56,6 @@ def new_invest():
     return d
     
 def sql_repr(value):
-
     if value is None:
         return "NULL"
     if isinstance(value, str):
@@ -72,23 +72,20 @@ def _repr_invest(invest):
 
 def db_delete_invest(cursor, id):
     sql = "delete from invest where rowid=" + str(id)
-    print_sql(sql)
-    cursor.execute(sql)
+    exec_sql(cursor, sql)
     
 def db_insert_invest(cursor, invest):
     r = _repr_invest(invest)
     fields = ",".join(map(itemgetter(0), r))
     values = ",".join(map(itemgetter(1), r))
     sql = "insert into invest (" + fields + ") values (" + values + ")"
-    print_sql(sql)
-    cursor.execute(sql)
+    exec_sql(cursor, sql)
     invest["id"] = cursor.lastrowid
     
 def db_load_invest(cursor, id):
     fields = map(itemgetter(0), FIELDS)
     sql = "select " + ",".join(fields) + " from invest where rowid=" + str(id)
-    print_sql(sql)
-    cursor.execute(sql)
+    exec_sql(cursor, sql)
     row = cursor.fetchone()
     d = dict(zip(fields, row))
     d["id"] = id
@@ -98,29 +95,25 @@ def db_update_invest(cursor, invest):
     r = _repr_invest(invest)
     updates = ",".join(map(lambda x: x[0] + "=" + x[1], r))
     sql = "update invest set " + updates + " where rowid=" + str(invest["id"])
-    print_sql(sql)
-    cursor.execute(sql)
+    exec_sql(cursor, sql)
     
 def db_getall_invest(cursor, where_clause=None):
     fields = map(itemgetter(0), FIELDS)
     sql = "select " + ",".join(fields) + ",rowid from invest"
     if where_clause:
         sql += " where " + where_clause 
-    print_sql(sql)
-    cursor.execute(sql)
+    exec_sql(cursor, sql)
     rows = cursor.fetchall()
     fields.append("id")
     return [dict(zip(fields, row)) for row in rows]
     
 def db_insert_valuelog(cursor, invest_id, date, value):
     sql = "insert into valuelog (invest_id, date, value) values({0}, '{1}', {2});".format(invest_id, date, value)
-    print_sql(sql)
-    cursor.execute(sql)
+    exec_sql(cursor, sql)
     
 def db_getall_valuelog(cursor, invest_id):
     sql = "select date, value from valuelog where invest_id={0}".format(invest_id)
-    print_sql(sql)
-    cursor.execute(sql)
+    exec_sql(cursor, sql)
     rows = cursor.fetchall()
     return [dict(zip(["date", "value"], row)) for row in rows]
 
@@ -128,5 +121,4 @@ def db_delete_valuelog(cursor, invest_id, date=None):
     sql = "delete from valuelog where invest_id={0}".format(invest_id)
     if date:
         sql += " and date='{0}'".format(date)
-    print_sql(sql)
-    cursor.execute(sql)
+    exec_sql(cursor, sql)
