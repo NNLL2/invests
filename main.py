@@ -78,7 +78,7 @@ def create_invest():
     db_call(db_insert_invest, inv)
     db_call(update_total_valuelog)
     
-    if inv["category"] == 1: 
+    if inv["category"] != 0: 
          db_call(update_invest_valuelog, inv["id"], inv["current_value"])
          
     return {}
@@ -104,7 +104,7 @@ def update_invest(id):
     inv["id"] = int(id)
     old_inv = db_call(db_load_invest, int(id))
     # Current value changed, update valuelog
-    if inv["category"] == 1: 
+    if inv["category"] != 0: 
         if old_inv["current_value"] != inv["current_value"]:
             db_call(update_invest_valuelog, int(id), inv["current_value"])
             inv["update_day"] = datetime.now().strftime(DATE_FORMAT)
