@@ -22,26 +22,25 @@ create table invest (
 
 sql_create_valuelog = """
 create table valuelog (
-invest_id integer,
-date text,
-value integer
+  invest_id integer,
+  date text,
+  value integer
 );
 """
-
 
 FIELDS = (
     ("name", ""),
     ("owner", ""),
-	("category", 0),
-	("initial_value", 0),
+    ("category", 0),
+    ("initial_value", 0),
     ("current_value", 0),
     ("start_day", ""),
     ("end_day", ""),
-	("update_day", ""),
+    ("update_day", ""),
     ("yearly_rate", 0),
     ("actual_gain", 0),
     ("year_days", 365),
-	("closed", 0),
+    ("closed", 0),
     ("comments", ""),
     ("create_day", ""),
 )
