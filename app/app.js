@@ -67,7 +67,8 @@ function prepare_invest(invest, for_show) {
         // Compute current gain rate
         var days = moment(invest.update_day, "YYYY-MM-DD").diff(moment(invest.start_day, "YYYY-MM-DD"), "days"); 
         if (days > 0) {
-          invest.current_gain_rate = invest.actual_gain / invest.initial_value * 365/days;
+          invest.current_gain_rate = 
+              (invest.current_value - invest.initial_value) / invest.initial_value * 365/days * 100;
         } else {
           invest.current_gain_rate = 0;
         }
