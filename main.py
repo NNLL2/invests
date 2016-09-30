@@ -7,7 +7,6 @@ from copy import deepcopy
 from bottle import *
 from invests import *
 
-
 import sqlite3
 DB_FILE = "mim.db"
 DATE_FORMAT = "%Y-%m-%d"
@@ -51,13 +50,9 @@ def logined():
 def index():
     return {"file_name": DB_FILE}
         
-@app.route("/invests", method="GET")        
+@app.route("/invests", method="GET")
 @logined()
 def content():
-    #if closed:
-    #    where_clause = "closed = " + closed
-    #else:
-    #    where_clause = None
     invests = db_call(db_getall_invest)
     for inv in invests:
         if inv["category"] == 0:
@@ -70,14 +65,12 @@ def content():
 @logined()
 def get_invest(id):
     inv = db_call(db_load_invest, int(id))
-    print inv
     if inv["category"] == 0:
         inv["current_value"] = compute_current_value(inv)
     return dict(invest=inv)
     
 @app.route('/invests', method="POST")
 def create_invest():
-    print request.json
     inv = new_invest() # Get default values
     inv.update(request.json)
     inv["create_day"] = datetime.now().strftime(DATETIME_FORMAT)
@@ -107,8 +100,6 @@ def update_invest_valuelog(cursor, invest_id, new_value):
 @app.route('/invests/<id>', method="PUT")
 @logined()
 def update_invest(id):
-    print "UPDATE REQUEST"
-    print request.json
     inv = request.json
     inv["id"] = int(id)
     old_inv = db_call(db_load_invest, int(id))

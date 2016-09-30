@@ -66,8 +66,6 @@ function prepare_invest(invest, for_show) {
         
         // Compute current gain rate
         var days = moment(invest.update_day, "YYYY-MM-DD").diff(moment(invest.start_day, "YYYY-MM-DD"), "days"); 
-        console.log(invest);
-        console.log("days=" + days);
         if (days > 0) {
           invest.current_gain_rate = invest.actual_gain / invest.initial_value * 365/days;
         } else {
@@ -271,8 +269,7 @@ function listCtrlFn($scope, $http, $route, $location, closed) {
     });
 }
 
-
-function draw(valuelogs, title) {
+function draw_valuelogs(valuelogs, title) {
   var ctx = document.getElementById("myChart");
   var myChart = new Chart(ctx, {
       type: 'line',
@@ -449,12 +446,11 @@ app.controller("valuelogsCtrl",['$scope', '$http', '$routeParams', '$location',
     $http.get('/valuelogs/' + $routeParams.invest_id)
       .success(function(response) {
         if ($routeParams.invest_id == 0) {
-          draw(prepare_valuelogs_for_chart(response.valuelogs),"Total value");
-        }
-        else {
+          draw_valuelogs(prepare_valuelogs_for_chart(response.valuelogs),"Total value");
+        } else {
           $http.get('/invests/' + $routeParams.invest_id)
             .success(function(response_inv) {      
-              draw(prepare_valuelogs_for_chart(response.valuelogs), response_inv.invest.name);
+              draw_valuelogs(prepare_valuelogs_for_chart(response.valuelogs), response_inv.invest.name);
             });
         }
       })
