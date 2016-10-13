@@ -5,7 +5,8 @@ from operator import itemgetter
 sql_create_invest = """
 create table invest (
   name text, 
-  owner text,
+  owner text, 
+  owner_id integer,
   category integer,
   initial_value integer,
   current_value integer,
@@ -28,9 +29,15 @@ create table valuelog (
 );
 """
 
+sql_create_owner = """
+create table owner (
+  name text
+);
+"""
+
 FIELDS = (
     ("name", ""),
-    ("owner", ""),
+    ("owner_id", 0),
     ("category", 0),
     ("initial_value", 0),
     ("current_value", 0),
@@ -121,3 +128,9 @@ def db_delete_valuelog(cursor, invest_id, date=None):
     if date:
         sql += " and date='{0}'".format(date)
     exec_sql(cursor, sql)
+
+def db_getall_owner(cursor):
+    sql = "select rowid, name from owner"
+    exec_sql(cursor, sql)
+    rows = cursor.fetchall()
+    return [dict(zip(["id", "name"], row)) for row in rows]

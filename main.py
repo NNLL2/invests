@@ -49,6 +49,12 @@ def logined():
 @logined()
 def index():
     return {"file_name": DB_FILE}
+    
+@app.route("/owners", method="GET")
+@logined()
+def getall_owners():
+    owners = db_call(db_getall_owner)
+    return dict(owners=owners)
         
 @app.route("/invests", method="GET")
 @logined()

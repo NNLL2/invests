@@ -12,12 +12,9 @@
         <label class="control-label col-sm-2" for="owner">管理:</label>
         <div class="col-sm-5">   
 
-          <div class="radio-inline">        
-            <input type="radio" name="owner" ng-model="invest.owner" value="JIN">JIN</input>
+          <div class="radio-inline" ng-repeat="owner in owners">        
+            <input type="radio" name="owner" ng-model="invest.owner_id" value="{[{owner.id}]}">{[{owner.name}]}</input>
           </div>
-          <div class="radio-inline">
-            <input type="radio" name="owner" ng-model="invest.owner" value="WANG">WANG</input>
-          </div> 
         
         </div>
       </div>

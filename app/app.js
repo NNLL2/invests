@@ -11,7 +11,7 @@ function updateEndDate(invest) {
     invest.end_day = new Date(start_day.add(invest.days, "days"));
 };
 
-function prepare_invest(invest, for_show) {
+function prepare_invest(invest, ownerService, for_show) {
   var c0_init = {
       yearly_rate: 5.00,
       year_days: 365,  
@@ -20,7 +20,7 @@ function prepare_invest(invest, for_show) {
   if (!invest) { // for new, this is only for edit
     invest = {
       start_day: new Date(), 
-      owner: "JIN",
+      owner_id: 1,
       initial_value: 50000,
       category: 0,
       closed: 0,
@@ -35,6 +35,7 @@ function prepare_invest(invest, for_show) {
     invest.is_new = moment().diff(moment(invest.create_day, "YYYY-MM-DD HH:mm:ss"), "days") < 1;
     //invest.start_day = new Date(invest.start_day);
     invest.initial_value /= 100;
+    invest.owner = ownerService.ownerIdToName(invest.owner_id);
     
     if (invest.category == 0) { //existing fixed
       invest.end_day = new Date(invest.end_day);
@@ -93,8 +94,8 @@ function prepare_invest(invest, for_show) {
   return invest;
 }
 
-function setup_invest($scope, invest, for_show) {
-  $scope.invest = prepare_invest(invest, for_show);
+function setup_invest($scope, invest, ownerService, for_show) {
+  $scope.invest = prepare_invest(invest, ownerService, for_show);
   $scope.updateDays = updateDays;
   $scope.updateEndDate = updateEndDate;
 };
@@ -102,7 +103,7 @@ function setup_invest($scope, invest, for_show) {
 function clean_invest(invest) {
   var inv = {}
   inv.name = invest.name;
-  inv.owner = invest.owner;
+  inv.owner_id = invest.owner_id;
   inv.initial_value = invest.initial_value * 100;
   inv.actual_gain = invest.actual_gain * 100;
   inv.category = parseInt(invest.category);
@@ -220,23 +221,22 @@ function submit_update($scope, $http, $routeParams, $location) {
 }
 
 function delete_invest($http, $route, invest_id, invest_name) { 
-    if (confirm("确定要删除" + invest_name + "?")) {
-      $http.delete("/invests/" + invest_id)
-          .success(function() {
-        $route.reload();
-      });
-    }
+  if (confirm("确定要删除" + invest_name + "?")) {
+    $http.delete("/invests/" + invest_id)
+        .success(function() {
+      $route.reload();
+    });
+  }
 }
 
-function listCtrlFn($scope, $http, $route, $location, closed) {
+function listCtrlFn($scope, $http, $route, $location, ownerService, closed) {
   $scope.isCollapsed = true;
   
   $scope.sortField2 = closed != 0?"-end_day":"end_day";
   
   $scope.sortField = 'end_day';
   $scope.sortReverse = closed != 0;
-  $scope.sortField1 = $scope.sortReverse?("-"+$scope.sortField):$scope.sortField
-  
+  $scope.sortField1 = $scope.sortReverse?("-"+$scope.sortField):$scope.sortField;
   
   $scope.setSort = function (field) {
       if ($scope.sortField == field) {
@@ -261,7 +261,7 @@ function listCtrlFn($scope, $http, $route, $location, closed) {
       total_value($scope, response.invests);
       
       angular.forEach($scope.invests, function(inv) {
-        inv = prepare_invest(inv, true); 
+        inv = prepare_invest(inv, ownerService, true); 
         if (inv.closed == 0 && inv.category != 0) {
           inv.end_day = new Date("2999-01-01");
         }
@@ -299,6 +299,21 @@ function draw_valuelogs(valuelogs, title) {
 /* Main Start */
 var app = angular.module('myApp', ['ui.bootstrap', 'ngRoute']);
 
+app.factory('ownerService',
+  function($http) {
+    var owners = null;
+    return { 
+      promise: $http.get("/owners").success(
+        function(response) {
+          owners = response.owners;
+        }),
+      getOwners: function() { return owners; },
+      ownerIdToName: function(id) { 
+        return owners.find(function(v) { return v.id == id; }).name;
+      }
+    };
+  });
+
 app.filter(
   'mydec', function() {
       return function(dec) {
@@ -322,6 +337,18 @@ app.config(function($interpolateProvider) {
 
 app.config(['$routeProvider',
   function($routeProvider) {
+  
+    var originalWhen = $routeProvider.when;
+    $routeProvider.when = function(path, route) {
+      route.resolve || (route.resolve = {});
+      angular.extend(route.resolve, {
+            'owners': function(ownerService) {            
+              return ownerService.promise;
+            }
+          });
+       return originalWhen.call($routeProvider, path, route);
+    };   
+      
     $routeProvider.
       when('/invests', {
         templateUrl: '/app/list.html',
@@ -366,18 +393,19 @@ app.controller("NavBarCtrl",
     $scope.isCollapsed = true;
   });
 
-app.controller('listCtrl', function($scope, $http, $route, $location) {
-    listCtrlFn($scope, $http, $route, $location, 0);
-});
+app.controller('listCtrl', function($scope, $http, $route, $location, ownerService) {
+    listCtrlFn($scope, $http, $route, $location, ownerService, 0);
+  });
 
 
-app.controller('listClosedCtrl', function($scope, $http, $route, $location) {
-    listCtrlFn($scope, $http, $route, $location, 1);
-});
+app.controller('listClosedCtrl', function($scope, $http, $route, $location, ownerService) {
+    listCtrlFn($scope, $http, $route, $location, ownerService, 1);
+  });
 
-app.controller('createCtrl', ['$scope', '$http', '$location', 
-  function($scope, $http,  $location) {
+app.controller('createCtrl', 
+  function($scope, $http,  $location, ownerService) {
     $scope.header = "新建项目";
+    $scope.owners = ownerService.getOwners();
     $scope.submit = function() {
       $http.post('/invests', JSON.stringify(clean_invest($scope.invest)))
         .success(function() {
@@ -385,13 +413,13 @@ app.controller('createCtrl', ['$scope', '$http', '$location',
         });
     };
     $scope.creating = true;
-    setup_invest($scope);
-  }]);
+    setup_invest($scope, null, ownerService);
+  });
 
-app.controller('detailCtrl', ['$scope', '$http', '$routeParams', '$location', 
-  function($scope, $http, $routeParams, $location) {
+app.controller('detailCtrl',  
+  function($scope, $http, $routeParams, $location, ownerService) {
     $scope.header = "编辑项目"; 
-
+    $scope.owners = ownerService.getOwners();
     $scope.submit = function() {
       submit_update($scope, $http, $routeParams, $location);
     };
@@ -399,50 +427,51 @@ app.controller('detailCtrl', ['$scope', '$http', '$routeParams', '$location',
     $http.get('/invests/' + $routeParams.invest_id)
       .success(function(response) {
         $scope.creating = false;
-        setup_invest($scope, response.invest);
+        setup_invest($scope, response.invest, ownerService);
       });
   
-  }]);
+  });
 
-app.controller('showCtrl', ['$scope', '$http', '$routeParams', '$location', 
-  function($scope, $http, $routeParams, $location) {
+app.controller('showCtrl',
+  function($scope, $http, $routeParams, $location, ownerService) {
     $http.get('/invests/' + $routeParams.invest_id)
       .success(function(response) {
-        setup_invest($scope, response.invest, true);
+        setup_invest($scope, response.invest, ownerService, true);
       });
   
-  }]);
+  });
 
-app.controller('closeCtrl', ['$scope', '$http', '$routeParams', '$location', 
-  function($scope, $http, $routeParams, $location) {
+app.controller('closeCtrl',
+  function($scope, $http, $routeParams, $location, ownerService) {
     $scope.submit = function() {
       submit_update($scope, $http, $routeParams, $location);
     };
     
     $http.get('/invests/' + $routeParams.invest_id)
       .success(function(response) {
-        setup_invest($scope, response.invest);
+        setup_invest($scope, response.invest, ownerService);
         if ($scope.invest.category != 0) {
           $scope.invest.end_day = new Date();
         }
         $scope.invest.closed = 1;
       });
   
-  }]);
+  });
 
-app.controller('updateCtrl', ['$scope', '$http', '$routeParams', '$location', 
-  function($scope, $http, $routeParams, $location) {
+app.controller('updateCtrl',
+  function($scope, $http, $routeParams, $location, ownerService) {
+    $scope.owners = ownerService.getOwners();
     $scope.submit = function() {
       submit_update($scope, $http, $routeParams, $location);
     };
     
     $http.get('/invests/' + $routeParams.invest_id)
       .success(function(response) {
-        setup_invest($scope, response.invest);
+        setup_invest($scope, response.invest, ownerService);
       });
-  }]);
+  });
 
-app.controller("valuelogsCtrl",['$scope', '$http', '$routeParams', '$location', 
+app.controller("valuelogsCtrl",
   function($scope, $http, $routeParams, $location) {
     $http.get('/valuelogs/' + $routeParams.invest_id)
       .success(function(response) {
@@ -454,6 +483,5 @@ app.controller("valuelogsCtrl",['$scope', '$http', '$routeParams', '$location',
               draw_valuelogs(prepare_valuelogs_for_chart(response.valuelogs), response_inv.invest.name);
             });
         }
-      })
-          
-  }]);
+      })        
+  });
