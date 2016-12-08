@@ -132,9 +132,9 @@ function total_value($scope, invests) {
     }
     var ongoing = invests.filter(function(inv) { return inv.closed == 0;});
     var ongoing_jin = 
-      invests.filter(function(inv) { return inv.closed == 0 && inv.owner == 'JIN';});
+      invests.filter(function(inv) { return inv.closed == 0 && inv.owner_id == 1;});
     var ongoing_wang = 
-      invests.filter(function(inv) { return inv.closed == 0 && inv.owner == 'WANG';});
+      invests.filter(function(inv) { return inv.closed == 0 && inv.owner_id == 2;});
     var closed_invest = 
       invests.filter(function(inv) { return inv.closed == 1;});
       
