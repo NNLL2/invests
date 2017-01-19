@@ -145,7 +145,7 @@ function total_value($scope, invests) {
     $scope.total_invest_wang = ongoing_wang.reduce(sum_init, 0)/100;
     $scope.total_invest_wang_count = ongoing_wang.length;
     var closed_this_year = 
-      closed_invest.filter(function(inv) { return inv.end_day.startsWith("2016"); } );
+      closed_invest.filter(function(inv) { return inv.end_day.startsWith("2017"); } );
     $scope.total_gain = 
       (closed_this_year.reduce(function(partSum, b) { return partSum + b.actual_gain}, 0))/100;
     $scope.total_current_value = 
