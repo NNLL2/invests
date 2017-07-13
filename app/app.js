@@ -140,14 +140,25 @@ function total_value($scope, invests) {
       
     $scope.total_invest = ongoing.reduce(sum_init, 0)/100;
     $scope.total_invest_count = ongoing.length;
+    $scope.total_invest_count_jin = ongoing_jin.length;
+    $scope.total_invest_count_wang = ongoing_wang.length;
     $scope.total_invest_jin = ongoing_jin.reduce(sum_init, 0)/100;
     $scope.total_invest_jin_count = ongoing_jin.length;
     $scope.total_invest_wang = ongoing_wang.reduce(sum_init, 0)/100;
     $scope.total_invest_wang_count = ongoing_wang.length;
     var closed_this_year = 
       closed_invest.filter(function(inv) { return inv.end_day.startsWith("2017"); } );
+    var closed_this_year_jin = 
+      closed_this_year.filter(function(inv) { return inv.owner_id == 1;})
+    var closed_this_year_wang = 
+      closed_this_year.filter(function(inv) { return inv.owner_id == 2;})
     $scope.total_gain = 
       (closed_this_year.reduce(function(partSum, b) { return partSum + b.actual_gain}, 0))/100;
+    $scope.total_gain_jin = 
+      (closed_this_year_jin.reduce(function(partSum, b) { return partSum + b.actual_gain}, 0))/100;
+          $scope.total_gain_wang = 
+      (closed_this_year_wang.reduce(function(partSum, b) { return partSum + b.actual_gain}, 0))/100;
+      
     $scope.total_current_value = 
       (ongoing.reduce(function(partSum, b) { return partSum + b.current_value}, 0))/100;
 }
@@ -382,6 +393,10 @@ app.config(['$routeProvider',
         templateUrl: '/app/valuelogs.html',
         controller: 'valuelogsCtrl'
       }).
+      when('/report', {
+        templateUrl: '/app/report.html',
+        controller: 'reportCtrl'
+      }).
       otherwise({
         redirectTo: '/invests'
       });
@@ -484,4 +499,14 @@ app.controller("valuelogsCtrl",
             });
         }
       })        
+  });
+  
+  app.controller('reportCtrl',
+  function($scope, $http, $routeParams, $location, ownerService) {
+  $http.get("/invests")
+    .success(function(response) {
+
+      total_value($scope, response.invests);
+
+    });
   });

@@ -143,8 +143,10 @@ def fonts_static(path):
     return static_file(path, root='fonts')
     
 @app.route('/app/:path#.+#')
-def fonts_static(path):
-    return static_file(path, root='app')
+def app_static(path):
+    response = static_file(path, root='app')
+    response.set_header("Cache-Control", "no-cache")
+    return response
     
 @app.route('/login',  method='GET')
 @view('login')
