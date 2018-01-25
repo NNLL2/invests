@@ -136,7 +136,9 @@ def getall_valuelog(id):
  
 @app.route('/static/:path#.+#')
 def server_static(path):
-    return static_file(path, root='static')
+    response = static_file(path, root='static')
+    response.set_header("Cache-Control", "no-cache")
+    return response
     
 @app.route('/fonts/:path#.+#')
 def fonts_static(path):
