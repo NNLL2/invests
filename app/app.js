@@ -1,4 +1,3 @@
-
 "use strict";
 function updateDays(invest) {
     var start_day = moment(invest.start_day);
@@ -147,7 +146,7 @@ function total_value($scope, invests) {
     $scope.total_invest_wang = ongoing_wang.reduce(sum_init, 0)/100;
     $scope.total_invest_wang_count = ongoing_wang.length;
     var closed_this_year = 
-      closed_invest.filter(function(inv) { return inv.end_day.startsWith("2017"); } );
+      closed_invest.filter(function(inv) { return inv.end_day.startsWith("2018"); } );
     var closed_this_year_jin = 
       closed_this_year.filter(function(inv) { return inv.owner_id == 1;})
     var closed_this_year_wang = 
@@ -164,33 +163,6 @@ function total_value($scope, invests) {
 }
 
 function prepare_valuelogs_for_chart(valuelogs) {
-  /*
-  valuelogs = [
-    {date: "2016-04-03", value: 1},
-    {date: "2016-01-19", value: 2},
-    {date: "2016-02-19", value: 3},
-    {date: "2016-02-29", value: 4},
-    {date: "2017-02-01", value: 6},
-   ]; */
-   /*
-   valuelogs = [{"date": "2015-11-17", "value": 277748900}, {"date": "2015-11-28", "value": 279331000},
-  
-   {"date": "2015-12-06", "value": 279478900}, {"date": "2015-12-15", "value": 213730000},
-    
-   {"date": "2015-12-22", "value": 217730000}, {"date": "2016-01-02", "value": 218228600},
- 
-   {"date": "2016-01-11", "value": 221946502}, {"date": "2016-01-21", "value": 211946502}, 
-   {"date": "2016-01-24", "value": 218926502}, {"date": "2016-02-23", "value": 220906902},
-
-   {"date": "2016-03-09", "value": 218911001}, {"date": "2016-04-05", "value": 217911001}];
-       
-   {"date": "2016-04-06", "value": 218420300}, {"date": "2016-04-08", "value": 223466800}, 
-   {"date": "2016-06-07", "value": 247188000}, {"date": "2016-07-07", "value": 261630300}];
-   
-
-   {"date": "2016-07-14", "value": 271630300}, {"date": "2016-07-19", "value": 271482400}];
-   {"date": "2016-07-28", "value": 272900083}, {"date": "2016-07-30", "value": 273900083}]; */
-
   valuelogs = valuelogs.sort(function(v1, v2) { 
     return moment(v1.date).isBefore(v2.date)? -1: (moment(v1.date).isAfter(v2.date)? 1: 0);
   });
@@ -213,7 +185,6 @@ function prepare_valuelogs_for_chart(valuelogs) {
           nextOfLastMonth = moment(lastMonth, "YYYY-MM").add(1, 'months').format("YYYY-MM");
         }
       }
-      
     }
     result.push({month: currentMonth, value: vl.value});
     lastMonth = currentMonth;
