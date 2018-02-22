@@ -1,4 +1,5 @@
 "use strict";
+
 function updateDays(invest) {
     var start_day = moment(invest.start_day);
     var end_day = moment(invest.end_day);
@@ -10,7 +11,7 @@ function updateEndDate(invest) {
     invest.end_day = new Date(start_day.add(invest.days, "days"));
 };
 
-function prepare_invest(invest, ownerService, for_show) {
+function prepare_invest(invest, ownerService, institutionService, for_show) {
   var c0_init = {
       yearly_rate: 5.00,
       year_days: 365,  
@@ -19,6 +20,7 @@ function prepare_invest(invest, ownerService, for_show) {
   if (!invest) { // for new, this is only for edit
     invest = {
       start_day: new Date(), 
+      institution_id: 0,
       owner_id: 1,
       initial_value: 50000,
       category: 0,
@@ -29,72 +31,75 @@ function prepare_invest(invest, ownerService, for_show) {
     angular.extend(invest, c0_init);
     invest.days = 180;
     updateEndDate(invest);
+    return invest;
+  }
+  
+  invest.is_new = moment().diff(moment(invest.create_day, "YYYY-MM-DD HH:mm:ss"), "days") < 1;
+  //invest.start_day = new Date(invest.start_day);
+  invest.initial_value /= 100;
+  invest.owner = ownerService.ownerIdToName(invest.owner_id);
+  invest.institution = institutionService.findInstitutionById(invest.institution_id);
+  invest.institution_name = invest.institution.name;
+  
+  if (invest.category == 0) { //existing fixed
+    invest.end_day = new Date(invest.end_day);
+    updateDays(invest);
+    invest.yearly_rate /= 100;
+    var to_todays = moment().diff(moment(invest.start_day, "YYYY-MM-DD"), "days");
+    invest.current_value = Math.max(0, Math.min(invest.days, to_todays))
+        * invest.initial_value 
+        * (invest.yearly_rate/100) 
+        / invest.year_days 
+        + invest.initial_value;
+    invest.current_value = Math.round(invest.current_value * 100)/100;
+        
+    invest.expected_gain = invest.initial_value * (invest.yearly_rate / 100) 
+                           * invest.days / invest.year_days;
     
-  } else { // for existing      
-    invest.is_new = moment().diff(moment(invest.create_day, "YYYY-MM-DD HH:mm:ss"), "days") < 1;
-    //invest.start_day = new Date(invest.start_day);
-    invest.initial_value /= 100;
-    invest.owner = ownerService.ownerIdToName(invest.owner_id);
+    invest.remain_days = moment(invest.end_day).diff(new Date(), "days");
+    invest.over_due =  (invest.closed == 0) && (invest.remain_days < 0);
+    if (invest.over_due) {
+      invest.over_days = -invest.remain_days;
+    }
     
-    if (invest.category == 0) { //existing fixed
+  } else { //existing variable
+    invest.current_value /= 100;
+    angular.extend(invest, c0_init);
+    if (invest.closed == 0) {
+      invest.days = 180;
+      updateEndDate(invest);
+      
+      // Compute current gain rate
+      var days = moment(invest.update_day, "YYYY-MM-DD").diff(moment(invest.start_day, "YYYY-MM-DD"), "days"); 
+      if (days > 0) {
+        invest.current_gain_rate = 
+            (invest.current_value - invest.initial_value) / invest.initial_value * 365/days * 100;
+      } else {
+        invest.current_gain_rate = 0;
+      }
+      
+    } else {
       invest.end_day = new Date(invest.end_day);
       updateDays(invest);
-      invest.yearly_rate /= 100;
-      var to_todays = moment().diff(moment(invest.start_day, "YYYY-MM-DD"), "days");
-      invest.current_value = Math.max(0, Math.min(invest.days, to_todays))
-          * invest.initial_value 
-          * (invest.yearly_rate/100) 
-          / invest.year_days 
-          + invest.initial_value;
-      invest.current_value = Math.round(invest.current_value * 100)/100;
-          
-      invest.expected_gain = invest.initial_value * (invest.yearly_rate / 100) 
-                             * invest.days / invest.year_days;
-      
-      invest.remain_days = moment(invest.end_day).diff(new Date(), "days");
-      invest.over_due =  (invest.closed == 0) && (invest.remain_days < 0);
-      if (invest.over_due) {
-        invest.over_days = -invest.remain_days;
-      }
-      
-    } else { //existing variable
-      invest.current_value /= 100;
-      angular.extend(invest, c0_init);
-      if (invest.closed == 0) {
-        invest.days = 180;
-        updateEndDate(invest);
-        
-        // Compute current gain rate
-        var days = moment(invest.update_day, "YYYY-MM-DD").diff(moment(invest.start_day, "YYYY-MM-DD"), "days"); 
-        if (days > 0) {
-          invest.current_gain_rate = 
-              (invest.current_value - invest.initial_value) / invest.initial_value * 365/days * 100;
-        } else {
-          invest.current_gain_rate = 0;
-        }
-        
-      } else {
-        invest.end_day = new Date(invest.end_day);
-        updateDays(invest);
-      }
-    }
-    
-    invest.start_day = new Date(invest.start_day);
-    
-    if (invest.closed == 1) {
-      invest.actual_gain /= 100;
-      invest.actual_gain_rate = invest.actual_gain / invest.initial_value 
-                                * invest.year_days/invest.days * 100;       
-    } else {
-      invest.actual_gain = invest.current_value - invest.initial_value;
-      invest.actual_gain = Math.round(invest.actual_gain * 100)/100;
     }
   }
+  
+  invest.start_day = new Date(invest.start_day);
+  
+  if (invest.closed == 1) {
+    invest.actual_gain /= 100;
+    invest.actual_gain_rate = invest.actual_gain / invest.initial_value 
+                              * invest.year_days/invest.days * 100;       
+  } else {
+    invest.actual_gain = invest.current_value - invest.initial_value;
+    invest.actual_gain = Math.round(invest.actual_gain * 100)/100;
+  }
+
   return invest;
 }
 
-function setup_invest($scope, invest, ownerService, for_show) {
-  $scope.invest = prepare_invest(invest, ownerService, for_show);
+function setup_invest($scope, invest, ownerService, institutionService, for_show) {
+  $scope.invest = prepare_invest(invest, ownerService, institutionService, for_show);
   $scope.updateDays = updateDays;
   $scope.updateEndDate = updateEndDate;
 };
@@ -103,6 +108,7 @@ function clean_invest(invest) {
   var inv = {}
   inv.name = invest.name;
   inv.owner_id = invest.owner_id;
+  inv.institution_id = invest.institution.id;
   inv.initial_value = invest.initial_value * 100;
   inv.actual_gain = invest.actual_gain * 100;
   inv.category = parseInt(invest.category);
@@ -167,7 +173,6 @@ function prepare_valuelogs_for_chart(valuelogs) {
     return moment(v1.date).isBefore(v2.date)? -1: (moment(v1.date).isAfter(v2.date)? 1: 0);
   });
   
-
   var lastMonth = "0000-00";
   var lastValue = 0;
   var result = [];
@@ -211,7 +216,7 @@ function delete_invest($http, $route, invest_id, invest_name) {
   }
 }
 
-function listCtrlFn($scope, $http, $route, $location, ownerService, closed) {
+function listCtrlFn($scope, $http, $route, $location, ownerService, institutionService, closed) {
   $scope.isCollapsed = true;
   
   $scope.sortField2 = closed != 0?"-end_day":"end_day";
@@ -234,21 +239,32 @@ function listCtrlFn($scope, $http, $route, $location, ownerService, closed) {
     delete_invest($http, $route, invest_id, invest_name);
   };
   $scope.closed_page = closed;
+  $scope.institutions = institutionService.getInstitutions();
+  $scope.setFilterInst = function (inst) {
+    $scope.invests = $scope.all_invests.filter(function(inv) {
+        if (inst == -1) return true;
+        return inv.institution_id == inst;
+    });
+  };
+  $scope.setFilterTodo = function () {
+    $scope.invests = $scope.all_invests.filter(function(inv) {
+        return inv.name.indexOf("TODO") !== -1;
+    });
+  }
+  
   $http.get("/invests")
     .success(function(response) {
       $scope.invests = response.invests.filter(function(inv) {
         return (inv.closed == closed);
       });
-
       total_value($scope, response.invests);
-      
       angular.forEach($scope.invests, function(inv) {
-        inv = prepare_invest(inv, ownerService, true); 
+        inv = prepare_invest(inv, ownerService, institutionService, true); 
         if (inv.closed == 0 && inv.category != 0) {
           inv.end_day = new Date("2999-01-01");
         }
       });
-
+      $scope.all_invests = $scope.invests;
     });
 }
 
@@ -295,6 +311,21 @@ app.factory('ownerService',
       }
     };
   });
+  
+app.factory('institutionService',
+  function($http) {
+    var institutions = null;
+    return { 
+      promise: $http.get("/institutions").success(
+        function(response) {
+          institutions = response.institutions;
+        }),
+      getInstitutions: function() { return institutions; },
+      findInstitutionById: function(id) { 
+        return institutions.find(function(v) { return v.id == id; });
+      }
+    };
+  });
 
 app.filter(
   'mydec', function() {
@@ -326,6 +357,9 @@ app.config(['$routeProvider',
       angular.extend(route.resolve, {
             'owners': function(ownerService) {            
               return ownerService.promise;
+            },
+            'institutions': function(institutionService) {            
+              return institutionService.promise;
             }
           });
        return originalWhen.call($routeProvider, path, route);
@@ -379,19 +413,20 @@ app.controller("NavBarCtrl",
     $scope.isCollapsed = true;
   });
 
-app.controller('listCtrl', function($scope, $http, $route, $location, ownerService) {
-    listCtrlFn($scope, $http, $route, $location, ownerService, 0);
+app.controller('listCtrl', function($scope, $http, $route, $location, ownerService, institutionService) {
+    listCtrlFn($scope, $http, $route, $location, ownerService, institutionService, 0);
   });
 
 
-app.controller('listClosedCtrl', function($scope, $http, $route, $location, ownerService) {
-    listCtrlFn($scope, $http, $route, $location, ownerService, 1);
+app.controller('listClosedCtrl', function($scope, $http, $route, $location, ownerService, institutionService) {
+    listCtrlFn($scope, $http, $route, $location, ownerService, institutionService, 1);
   });
 
 app.controller('createCtrl', 
-  function($scope, $http,  $location, ownerService) {
+  function($scope, $http,  $location, ownerService, institutionService) {
     $scope.header = "新建项目";
     $scope.owners = ownerService.getOwners();
+    $scope.institutions = institutionService.getInstitutions();
     $scope.submit = function() {
       $http.post('/invests', JSON.stringify(clean_invest($scope.invest)))
         .success(function() {
@@ -399,13 +434,14 @@ app.controller('createCtrl',
         });
     };
     $scope.creating = true;
-    setup_invest($scope, null, ownerService);
+    setup_invest($scope, null, ownerService, institutionService);
   });
 
 app.controller('detailCtrl',  
-  function($scope, $http, $routeParams, $location, ownerService) {
+  function($scope, $http, $routeParams, $location, ownerService, institutionService) {
     $scope.header = "编辑项目"; 
     $scope.owners = ownerService.getOwners();
+    $scope.institutions = institutionService.getInstitutions();
     $scope.submit = function() {
       submit_update($scope, $http, $routeParams, $location);
     };
@@ -413,29 +449,29 @@ app.controller('detailCtrl',
     $http.get('/invests/' + $routeParams.invest_id)
       .success(function(response) {
         $scope.creating = false;
-        setup_invest($scope, response.invest, ownerService);
+        setup_invest($scope, response.invest, ownerService, institutionService);
       });
   
   });
 
 app.controller('showCtrl',
-  function($scope, $http, $routeParams, $location, ownerService) {
+  function($scope, $http, $routeParams, $location, ownerService, institutionService) {
     $http.get('/invests/' + $routeParams.invest_id)
       .success(function(response) {
-        setup_invest($scope, response.invest, ownerService, true);
+        setup_invest($scope, response.invest, ownerService, institutionService, true);
       });
   
   });
 
 app.controller('closeCtrl',
-  function($scope, $http, $routeParams, $location, ownerService) {
+  function($scope, $http, $routeParams, $location, ownerService, institutionService) {
     $scope.submit = function() {
       submit_update($scope, $http, $routeParams, $location);
     };
     
     $http.get('/invests/' + $routeParams.invest_id)
       .success(function(response) {
-        setup_invest($scope, response.invest, ownerService);
+        setup_invest($scope, response.invest, ownerService, institutionService);
         if ($scope.invest.category != 0) {
           $scope.invest.end_day = new Date();
         }
@@ -445,15 +481,16 @@ app.controller('closeCtrl',
   });
 
 app.controller('updateCtrl',
-  function($scope, $http, $routeParams, $location, ownerService) {
+  function($scope, $http, $routeParams, $location, ownerService, institutionService) {
     $scope.owners = ownerService.getOwners();
+    $scope.institutions = institutionService.getInstitutions();
     $scope.submit = function() {
       submit_update($scope, $http, $routeParams, $location);
     };
     
     $http.get('/invests/' + $routeParams.invest_id)
       .success(function(response) {
-        setup_invest($scope, response.invest, ownerService);
+        setup_invest($scope, response.invest, ownerService, institutionService);
       });
   });
 
@@ -473,11 +510,9 @@ app.controller("valuelogsCtrl",
   });
   
   app.controller('reportCtrl',
-  function($scope, $http, $routeParams, $location, ownerService) {
+  function($scope, $http, $routeParams, $location, ownerService, institutionService) {
   $http.get("/invests")
     .success(function(response) {
-
       total_value($scope, response.invests);
-
     });
   });

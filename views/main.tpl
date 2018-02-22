@@ -59,6 +59,12 @@
       width: 100%;
       height: auto;
     }
+    
+    .filterButton {
+      padding: 1px;
+      margin: 1px;
+      font-size: 15px;
+    }
       
     /*
     #statPane {
@@ -78,6 +84,7 @@
     img.inactive {
         opacity: 0.2;
     }
+    
 
 
     </style>

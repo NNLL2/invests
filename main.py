@@ -55,6 +55,12 @@ def index():
 def getall_owners():
     owners = db_call(db_getall_owner)
     return dict(owners=owners)
+    
+@app.route("/institutions", method="GET")
+@logined()
+def getall_institutions():
+    institutions = db_call(db_getall_institution)
+    return dict(institutions=institutions)
         
 @app.route("/invests", method="GET")
 @logined()

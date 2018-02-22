@@ -7,6 +7,7 @@ create table invest (
   name text, 
   owner text, 
   owner_id integer,
+  institution_id integer,
   category integer,
   initial_value integer,
   current_value integer,
@@ -38,6 +39,7 @@ create table owner (
 FIELDS = (
     ("name", ""),
     ("owner_id", 0),
+    ("institution_id", 0),
     ("category", 0),
     ("initial_value", 0),
     ("current_value", 0),
@@ -131,6 +133,12 @@ def db_delete_valuelog(cursor, invest_id, date=None):
 
 def db_getall_owner(cursor):
     sql = "select rowid, name from owner"
+    exec_sql(cursor, sql)
+    rows = cursor.fetchall()
+    return [dict(zip(["id", "name"], row)) for row in rows]
+    
+def db_getall_institution(cursor):
+    sql = "select institution_id, name from institution"
     exec_sql(cursor, sql)
     rows = cursor.fetchall()
     return [dict(zip(["id", "name"], row)) for row in rows]
